@@ -100,3 +100,46 @@ Stage Summary:
 - Версия PWA в kip8: kipia-v394. Версия десктопа: 2.1.7.
 - Пользователю: после пересборки Electron-приложения в светлой теме
   на странице расходомеров зебра карточек станет немного контрастней.
+
+---
+Task ID: 241 финал (auto-sync из kip8@5edaeac — модуль WorkSchedule Tasks 201-239 + sidebar-move)
+Agent: main (Super Z)
+Task: Финальный перенос в боевой десктоп kip8-desktop изменений Task 241
+      из kip8 (commit 5edaeac). В kip8 завершён перенос модуля WorkSchedule
+      (Tasks 201-239) + Task 241 sidebar-move. В kip8-desktop: index.html
+      обновлён автоматически через GitHub Action sync-to-desktop.yml.
+
+Work Log:
+- Источник: kip8@5edaeac (Task 241 финал: перенос модуля WorkSchedule
+  Tasks 201-239 + sidebar-move в kip8).
+- index.html: auto-sync из kip8@5edaeac через GitHub Action
+  sync-to-desktop.yml (триггер — push в kip8/index.html на ветке main).
+  После sync: kip8-desktop/index.html содержит весь WorkSchedule-стек:
+  - CSS-блок .ws-* (279 строк) — тулбар, сетка шахматки, легенда,
+    карточки сотрудников и инструктажей, светлая тема;
+  - HTML 3 страницы (#page-work-schedule/-employees/-trainings);
+  - 3 bottom-sheet-а (wsCellOverlay/wsEmpOverlay/wsTrOverlay);
+  - Кнопка меню workScheduleMenuBtn в .kip-ios-block страницы Документация ИОС;
+  - JS-модуль var WorkSchedule = {...} (770 строк) — клиентский модуль;
+  - 3 init-блока в navigateTo() (WorkSchedule.init/initEmployeesPage/initTrainingsPage);
+  - _WORK_SCHEDULE_PAGES в role config (3 страницы);
+  - Task 241 sidebar-move: sidebar-item-extra sidebarWorkScheduleBtn внутри
+    сворачиваемой группы docs-ios сайдбара, счётчик «2».
+- sw.js: в kip8-desktop НЕТ (Electron). Версия PWA в kip8: kipia-v394 → v395.
+- Версия десктопа: 2.1.7 (без изменений — Electron-сборка не требует бампа
+  для контентных обновлений, но пользователю нужно пересобрать/обновить
+  приложение, чтобы получить новый index.html).
+
+Stage Summary:
+- kip8-desktop полностью синхронен с kip8@5edaeac: index.html содержит
+  модуль WorkSchedule (Tasks 201-239) + Task 241 sidebar-move.
+- После пересборки/перезапуска Electron-приложения под ролью «Админ» в
+  сайдбаре внутри группы «Документация ИОС» появится пункт «График работы»
+  (оранжевый, navigateTo('work-schedule')), при клике откроется шахматка
+  сменного и дневного персонала ИОС.
+- Допущения (как в kip8): Apps Script production deployment должен включать
+  WorkSchedule.gs и обновлённые роуты Code.gs. До этого график работы
+  возвращает no_session/unknown_action.
+- Файлы изменены: index.html (auto-sync из kip8). worklog.md и
+  Системный_промт_для_приложения_КИПиА.md — обновлены вручную.
+- Локальная дата: 2026-08-29 18:07:29 UTC+07:00 (Asia/Novosibirsk).
