@@ -71,3 +71,32 @@ Stage Summary:
   получит фильтры/ширину колонок/клавиатуру/CSV; релиз 2.1.7 остаётся
   актуальным (изменения только в контенте)
 - Следующий Task ID — 191
+---
+Task ID: 240-241 (перенос из kip8test-desktop — частичный)
+Agent: main (Super Z)
+Task: Перенос в боевой десктоп kip8-desktop изменений Tasks 240+241
+      (через GitHub Action sync-to-desktop.yml из kip8). Task 241 зебра
+      применена; sidebar-move часть НЕ перенесена (требует модуль
+      WorkSchedule, которого в kip8/kip8-desktop ещё нет).
+
+Work Log:
+- Источник: kip8@<commit после kipia-v394 push> (Tasks 240+241 — частичный
+  перенос из kip8test@96039d0: только зебра, без sidebar-move).
+- index.html (~line 3037-3038): светлая тема зебры карточек расходомеров —
+  odd-ряд потемнее (rgba(243,233,223,0.96) vs было 248,242,238),
+  even без изменений. Разница R-канала 4 → 9. CSS-комментарий с
+  пояснением про sidebar-move deferred.
+- index.html: sidebar-item «График работы» ВНУТРИ группы docs-ios
+  НЕ добавлен — требует модуля WorkSchedule (Tasks 201-239).
+- sw.js: в kip8-desktop НЕТ (Electron). Версия PWA в kip8:
+  kipia-v393 → kipia-v394.
+
+Stage Summary:
+- В kip8-desktop применена ТОЛЬКО зебра-часть Task 241.
+- Sidebar-move — ОТЛОЖЕНО (как и в kip8). Требуется предварительный
+  перенос модуля WorkSchedule (Tasks 201-239) из kip8test.
+- Источник: auto-sync из kip8@<commit> (GitHub Action).
+- Файлы изменены: index.html (только зебра). sw.js отсутствует.
+- Версия PWA в kip8: kipia-v394. Версия десктопа: 2.1.7.
+- Пользователю: после пересборки Electron-приложения в светлой теме
+  на странице расходомеров зебра карточек станет немного контрастней.
