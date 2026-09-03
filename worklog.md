@@ -143,3 +143,58 @@ Stage Summary:
 - Файлы изменены: index.html (auto-sync из kip8). worklog.md и
   Системный_промт_для_приложения_КИПиА.md — обновлены вручную.
 - Локальная дата: 2026-08-29 18:07:29 UTC+07:00 (Asia/Novosibirsk).
+---
+Task ID: 306-перенос (десктоп)
+Agent: main (Super Z)
+Task: По указанию пользователя «Так же перенеси все последние
+      изменения в боевой kip8-desktop» — доводка боевого десктопа
+      до полного паритета с kip8@f43012f (партия Tasks 298-306).
+
+Work Log:
+- Проверка автосинка: пуш kip8@f43012f уже синхронизировал
+  index.html + charts-desktop.js + devices-table-desktop.js
+  (коммит ba23818 «auto: sync index.html from kip8@f43012f»,
+  все 4 workflow kip8 — success). Верификация байт-в-байт: все
+  3 файла IDENTICAL; images/ — идентичны.
+- Найдена и устранена проблема: CI Tests в kip8-desktop ПАДАЛ
+  (3 фейла в test-role-access.js — устаревший список от Task 190
+  не знал новые страницы «Отпуска»/«График работы»;红了 3 пуша
+  подряд: ba23818/04dc468/55de39a).
+- tests/ — полный синк байт-в-байт из kip8@f43012f: 27 файлов
+  (было 12): +15 новых (test-work-schedule, test-vacations-*
+  ×5, test-work-events, test-tab-numbers, test-task306,
+  test-deploy-url, test-flow-period-input, test-flowmeter-
+  validation/-comment, test-prod-calendar, test-minesweeper),
+  обновлены extract-functions/run-all/test-role-access.
+- НОВОЕ для полного прогона тестов (фикстуры, в Electron-сборку
+  НЕ попадают — files: index.html/images/data/electron):
+  sw.js (32 КБ) + scripts/ 8×.gs (Code, Flowmeter,
+  FlowmeterArchive, TabNumbersFix, VacationsDiagnose,
+  VacationsInit, ValidationRules, WorkSchedule) — байт-в-байт
+  из kip8. .gitignore: + scripts/.gscheck-code.js (врем. файл
+  test-deploy-url).
+- data/ офлайн-fallback: devices.json (1 695 988), lockouts.json
+  (431 576), projects.json (176 687) — актуальные авто-коммиты
+  Google Sheets из kip8 (70f8e40/562f7cc); остальные 6 файлов
+  уже были идентичны.
+- Системный_промт — копия kip8@f43012b post-Task 306 (166 453
+  байта; было 77 030 — уровень Task 190).
+- README.md — актуализированы секции «Связи с kip8» и «Структура»
+  (sw.js/scripts/tests — автосинк-фикстуры; data/images — вручную).
+- Локальная верификация: node tests/run-all.js → 1433 passed /
+  0 failed (942 мс) — ПОЛНЫЙ ПАРИТЕТ с kip8@f43012f и
+  kip8test@4fc48bc.
+- Коммит + push (PAT-протокол: URL с токеном → push → сброс URL).
+
+Stage Summary:
+- kip8-desktop полностью синхронен с kip8@f43012f (партия Tasks
+  298-306): контент (авто-синк ba23818) + тесты 1433/0 + data +
+  промт. CI починен (было 495+3 фейла → 1433/0).
+- ПОЛЬЗОВАТЕЛЮ НИЧЕГО НЕ НУЖНО: новый релиз НЕ требуется
+  (electron/main.js и package.json не менялись; приложение грузит
+  живой контент с GitHub Pages — пользователям достаточно
+  перезапустить приложение; cleanCacheOnStartup подхватит kipia-v411).
+  Apps Script и листы — уже задеплоены для kip8 в Task 306-перенос
+  (ОДИН бэкенд на всё).
+- Следующий номер в kip8: 307.
+- Локальная дата: 2026-09-03 (Asia/Novosibirsk, UTC+07:00).

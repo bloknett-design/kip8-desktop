@@ -41,3 +41,6 @@ logs/
 # Build cache
 .cache/
 .parcel-cache/
+
+# Временный файл теста test-deploy-url.js (node --check Code.gs)
+scripts/.gscheck-code.js

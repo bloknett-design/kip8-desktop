@@ -12,7 +12,11 @@
 
 - `index.html` **синхронизируется автоматически** из `kip8` при каждом его обновлении
   (GitHub Action `sync-to-desktop.yml` в репозитории kip8, секрет `DESKTOP_SYNC_TOKEN`).
-- `data/`, `images/`, `tests/` — статические копии из kip8 (обновляются при релизе).
+- `sw.js`, `scripts/*.gs`, `tests/` — синхронизируются автоматически из `kip8`
+  (контентные файлы для полного паритета тестов: 1433 теста); в Electron-сборку
+  НЕ попадают (files в package.json: index.html/images/data/electron).
+- `data/`, `images/` — статические копии из kip8 для офлайн-fallback
+  (обновляются вручную при переносе/релизе).
 - Приложение при запуске грузит живую страницу https://bloknett-design.github.io/kip8/
   (fallback — локальные файлы `app://` при отсутствии сети).
 - `cleanCacheOnStartup` очищает SW/кэш при каждом запуске — пользователю достаточно
@@ -30,9 +34,13 @@ kip8-desktop/
 │   └── main.js             # Точка входа Electron (REMOTE_APP_URL = kip8)
 ├── package.json            # electron-builder конфиг (appId com.bloknett.kipia)
 ├── package-lock.json
+├── sw.js                  # Копия PWA service worker из kip8 (фикстура тестов;
+│                           # в Electron-сборку НЕ попадает)
+├── scripts/               # Apps Script .gs из kip8 (фикстуры тестов, 8 файлов;
+│                           # сервер бэкенда НЕ задеплоен отсюда)
 ├── data/                   # Статическая копия данных (синхронизируется при релизе)
 ├── images/                 # Иконки, логотипы, иллюстрации
-├── tests/                  # Тесты (те же, что в kip8: node tests/run-all.js)
+├── tests/                  # Тесты — байт-в-байт из kip8 (1433 passed / 0 failed)
 └── .github/workflows/
     ├── build-desktop.yml   # Сборка под Windows/Linux/macOS + релиз на тег v*
     └── ci.yml              # Тесты при каждом пуше
