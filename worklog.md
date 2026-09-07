@@ -252,3 +252,27 @@ Stage Summary:
 - Контент/сервер/листы/Apps Script НЕ тронуты (только
   сборочная конфигурация).
 - Локальная дата: 2026-09-07 (Asia/Novosibirsk, UTC+07:00).
+
+УТОЧНЕНИЕ (Task 339, по фактам CI-прогона 34cbc1d):
+- electron-builder 26.15.3 с arch ["x64","ia32"] + ${arch} в
+  artifactName собирает ТРИ установщика (NsisTarget.finishBuild:
+  builds = универсальный + по одному на arch, т.к. шаблон имени
+  содержит ${arch}): KIPiA-Setup-2.1.8.exe (УНИВЕРСАЛЬНЫЙ —
+  обе разрядности, сам выбирает при установке; arch=null →
+  ${arch} опускается, имя без суффикса, как у 2.1.7) +
+  KIPiA-Setup-2.1.8-x64.exe + KIPiA-Setup-2.1.8-ia32.exe.
+  CI подтвердил: артефакт KIPiA-win-setup 338.9 МБ (≈170+87+85),
+  лог build-win: «building target=nsis file=dist\KIPiA-Setup-
+  2.1.8.exe archs=x64, ia32» → «-x64.exe archs=x64» → «-ia32.exe
+  archs=ia32»; blockmap-ы для всех трёх.
+- latest.yml: files[] = [универсальный, ia32, x64] (сортировка:
+  arch=null первым); NsisUpdater.findFile у 64-битного приложения
+  берёт файл с «x64» в URL, у 32-битного — «ia32»; fallback —
+  универсальный. Автообновление корректно для обеих разрядностей.
+- README/worklog/текст релиза обновлены: ТРИ Windows-файла
+  (универсальный + x64 + ia32), правило выбора упрощено
+  («не знаете разрядность — качайте KIPiA-Setup-<версия>.exe»).
+- Аналогичный CI-успех (main, без тега): kip8@f192fd6
+  (KIPiA-win-setup 339.0 МБ) и kip8test-desktop@888fcae
+  (337.4 МБ; build-mac там упал на ECONNRESET при npm ci —
+  сетевой флэйк раннера, build-win/build-linux success).
