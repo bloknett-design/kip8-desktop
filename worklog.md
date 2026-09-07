@@ -198,3 +198,57 @@ Stage Summary:
   (ОДИН бэкенд на всё).
 - Следующий номер в kip8: 307.
 - Локальная дата: 2026-09-03 (Asia/Novosibirsk, UTC+07:00).
+---
+Task ID: 339 (десктоп)
+Agent: Z.ai Code (главная сессия)
+Task: Заявка пользователя: «Нужно сделать отдельную сборку
+      десктопной версии для Win32» — 32-битный Windows-инсталлятор
+      в дополнение к x64 (kip8-desktop, ПРОДАКШН).
+
+Work Log:
+- ДИАГНОСТИКА: win-цель electron-builder была только x64 →
+  на 32-битных Windows приложение не ставится вообще.
+  Проверено по ИСХОДНИКАМ зафиксированных версий (package-lock:
+  app-builder-lib 26.15.3, electron-updater 6.8.9, electron
+  35.7.5 — бинарник electron-v35.7.5-win32-ia32.zip существует):
+  1) один прогон electron-builder с arch [x64, ia32] пишет ОДИН
+     общий latest.yml (Windows — без arch-суффикса), files[]
+     обоих инсталляторов (PR electron-builder#2994);
+  2) electron-updater NsisUpdater.findFile(files, "exe") ищет
+     в URL файла process.arch («x64»/«ia32»), при отсутствии —
+     первый (там ia32) → имена артефактов ОБЯЗАНЫ содержать arch.
+- РЕАЛИЗАЦИЯ (package.json): win.target.arch ["x64","ia32"];
+  win.artifactName KIPiA-Setup-${version}.${ext} →
+  KIPiA-Setup-${version}-${arch}.${ext} (→ KIPiA-Setup-2.1.8-
+  x64.exe + KIPiA-Setup-2.1.8-ia32.exe); version 2.1.7 → 2.1.8.
+  electron/main.js НЕ тронут (нативных модулей нет, контент —
+  живой с Pages; ia32-сборка функционально идентична x64).
+- .github/workflows/build-desktop.yml: шаг build-win —
+  «NSIS, x64 + ia32/Win32», аплоад «installers (x64 + Win32)»
+  (dist/*.exe — оба), dist/latest*.yml — общий; текст релиза —
+  раздельные строки Windows 64-бит (x64.exe) / Windows 32-бит
+  Win32 (ia32.exe) + пояснение про независимое автообновление.
+- README.md: секция «Сборка и релизы» — два установщика,
+  НОВАЯ подсекция «Как выбрать установщик Windows» (правило
+  выбора + механизм автообновления), примечание в «Связи с kip8».
+- РЕЛИЗ: коммит в main (CI BuildDesktop собирает ОБЕ арх —
+  валидация), затем тег v2.1.8 → GitHub Release с
+  KIPiA-Setup-2.1.8-x64.exe (~87 МБ) + KIPiA-Setup-2.1.8-ia32.exe
+  + общий latest.yml (files: ia32, x64 — каждой разрядности свой
+  файл) + blockmap-ы; существующие 64-битные установки 2.1.7
+  предложат обновление до 2.1.8 и скачают x64-файл.
+- ПАРИТЕТ: те же правки конфига — kip8 (стейджинг-сборка,
+  version 1.0.0→1.1.1) и kip8test-desktop (тест, KIPiA-Test-*,
+  2.1.7→2.1.8) — без тегов.
+
+Stage Summary:
+- kip8-desktop v2.1.8: ОТДЕЛЬНАЯ Win32-сборка ГОТОВА — релиз
+  v2.1.8 содержит KIPiA-Setup-2.1.8-ia32.exe (32-бит) и
+  KIPiA-Setup-2.1.8-x64.exe (64-бит); автообновление
+  разрядностезависимое, единый latest.yml.
+- 32-битным пользователям: скачать KIPiA-Setup-2.1.8-ia32.exe
+  из Releases и установить. 64-битным: как обычно (x64-файл или
+  автообновление).
+- Контент/сервер/листы/Apps Script НЕ тронуты (только
+  сборочная конфигурация).
+- Локальная дата: 2026-09-07 (Asia/Novosibirsk, UTC+07:00).
