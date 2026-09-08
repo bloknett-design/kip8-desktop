@@ -294,5 +294,11 @@ Stage Summary:
   init-скрипта существует» = false);
 - Тесты: **2288/0** (было 2286/2). Релиз НЕ нужен: electron/main.js,
   package.json и контент не менялись — только справочники scripts/.
+- Догон №2 (после ребейза на origin/6e8a9d6): авто-синк kip8@7ceed82
+  принёс в tests/ ПОЛНЫЙ прогон (вкл. Task 346/347), которому нужны
+  справочники Auth.gs, Sessions.gs, SessionsDevicePolicy.gs, Utils.gs
+  и DEPLOY-Task346-доки — до догона run-all.js падал ENOENT на
+  scripts/Sessions.gs (репо на GitHub было сломано). Скопированы из
+  kip8 → **2338/0 = полный паритет тестов с kip8**.
 
 Следующий номер задачи: 348.
