@@ -276,3 +276,23 @@ Stage Summary:
   (KIPiA-win-setup 339.0 МБ) и kip8test-desktop@888fcae
   (337.4 МБ; build-mac там упал на ECONNRESET при npm ci —
   сетевой флэйк раннера, build-win/build-linux success).
+
+---
+
+## Task 347 — догон справочников (синхрон с kip8, 2026-09-08)
+
+Заявка: «проверить, чтобы в репозиториях проектов все файлы были
+актуальными» (сопровождение Tasks 346/347).
+
+- scripts/Code.gs — догон до байт-в-байт ≡ kip8: фикс роутера Task 346
+  (`Auth.verifyOTP(…, payload)` — иначе политика «1 моб + 1 десктоп»
+  неактивна) + вызов `Utils.cleanupStaleSessions()` в hourlyCleanup
+  (Task 347);
+- scripts/RoleMatrixGate.gs + scripts/RoleMatrixTask340Init.gs — НОВЫЕ
+  справочники из kip8: авто-синк принёс tests/test-task340.js, но НЕ
+  файлы → CI был красный (2286/2: ENOENT RoleMatrixGate.gs, «файл
+  init-скрипта существует» = false);
+- Тесты: **2288/0** (было 2286/2). Релиз НЕ нужен: electron/main.js,
+  package.json и контент не менялись — только справочники scripts/.
+
+Следующий номер задачи: 348.
