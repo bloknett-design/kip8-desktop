@@ -302,3 +302,17 @@ Stage Summary:
   kip8 → **2338/0 = полный паритет тестов с kip8**.
 
 Следующий номер задачи: 348.
+
+---
+
+## Task 348 — синхрон справочников с kip8 (2026-09-09)
+
+- `scripts/Utils.gs`, `scripts/Sessions.gs`, `scripts/Auth.gs`,
+  DEPLOY-Task348-uuid-lockservice.md — байт-в-байт из kip8
+  (getUuid вместо Math.random; Utils.withLock от гонок);
+- tests/test-task348.js + test-task346.js + test-task347.js +
+  run-all.js — синхрон из kip8;
+- Тесты: **2366/0 = полный паритет с kip8** (было 2338). Релиз НЕ
+  нужен: менялись только справочники scripts/ и тесты.
+
+Следующий номер задачи: 349.
