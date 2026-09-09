@@ -68,8 +68,9 @@ jobs:
 
   # ─── PE-верификация (ubuntu: 7z + python3) ─────────────────────────────
   # Страховка от регрессии (Task 354): KIPiA.exe внутри установщиков обязан
-  # быть 32/64-битным (machine 0x014c / 0x8664) и объявлять PE OS 5.01 —
-  # иначе загрузчик Windows 7/8.1 отклонит его с ошибкой «не является
+  # быть 32/64-битным (machine 0x014c / 0x8664) и объявлять «старый» PE OS:
+  # ia32 → 5.01, x64 → 5.02 (минимум для x64-образов; Win7 x64 = 6.1 ≥ 5.02).
+  # Иначе загрузчик Windows 7/8.1 отклонит образ с ошибкой «не является
   # приложением Win32» (как у сборок на Electron 35, где PE OS = 10.00).
   verify-pe:
     needs: build-legacy-win
@@ -84,7 +85,7 @@ jobs:
           name: KIPiA-win7-legacy-setup
           path: legacy-installers
 
-      - name: Verify PE headers (machine + OS 5.01 — совместимость с Win7)
+      - name: Verify PE headers (machine + OS 5.01/5.02 — совместимость с Win7)
         run: |
           set -e
           ls -lh legacy-installers/
@@ -92,8 +93,8 @@ jobs:
           import os, struct, subprocess, glob
 
           checks = {
-              'ia32': {'glob': 'legacy-installers/KIPiA-Setup-*-win7-ia32.exe', 'payload': 'app-32.7z', 'machine': 0x014c},
-              'x64':  {'glob': 'legacy-installers/KIPiA-Setup-*-win7-x64.exe',  'payload': 'app-64.7z', 'machine': 0x8664},
+              'ia32': {'glob': 'legacy-installers/KIPiA-Setup-*-win7-ia32.exe', 'payload': 'app-32.7z', 'machine': 0x014c, 'os': (5, 1)},
+              'x64':  {'glob': 'legacy-installers/KIPiA-Setup-*-win7-x64.exe',  'payload': 'app-64.7z', 'machine': 0x8664, 'os': (5, 2)},
           }
 
           def extract(installer, payload, outdir):
@@ -113,8 +114,8 @@ jobs:
               machine = struct.unpack_from('<H', head, e + 4)[0]
               osmaj, osmin = struct.unpack_from('<2H', head, e + 24 + 40)
               assert machine == cfg['machine'], f'{arch}: machine=0x{machine:04x}, ожидалось 0x{cfg["machine"]:04x}'
-              assert (osmaj, osmin) == (5, 1), f'{arch}: PE OS {osmaj}.{osmin:02d}, ожидалось 5.01 (Win7-совместимо)'
-              print(f'OK {arch}: KIPiA.exe machine=0x{machine:04x}, PE OS 5.01 — запустится на Windows 7')
+              assert (osmaj, osmin) == cfg['os'], f'{arch}: PE OS {osmaj}.{osmin:02d}, ожидалось {cfg["os"][0]}.{cfg["os"][1]:02d} (Win7-совместимо)'
+              print(f'OK {arch}: KIPiA.exe machine=0x{machine:04x}, PE OS {osmaj}.{osmin:02d} — запустится на Windows 7')
           print('PE-верификация легаси-сборки пройдена')
           PY
 
