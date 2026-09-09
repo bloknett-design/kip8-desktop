@@ -1,0 +1,176 @@
+name: Build Legacy Win7
+
+# ============================================================================
+# Task 354 — легаси-сборка установщиков для Windows 7 / 8.1
+# ============================================================================
+# Обычные установщики (build-desktop.yml, Electron 35) требуют Windows 10+:
+# загрузчик Win7/8.1 отклоняет их KIPiA.exe с ошибкой «не является
+# приложением Win32». Здесь собирается ЛЕГАСИ-установка на Electron 22.3.27
+# (последняя ветка с поддержкой Windows 7/8.1, Chromium 108):
+#   - KIPiA-Setup-<версия>-win7.exe     — универсальный (сам выберет разрядность)
+#   - KIPiA-Setup-<версия>-win7-ia32.exe — 32-битная Windows 7/8.1
+#   - KIPiA-Setup-<версия>-win7-x64.exe  — 64-битная Windows 7/8.1
+#
+# Запуск: пуш тега legacy-v* (например legacy-v2.1.8) или вручную
+# (workflow_dispatch — без релиза, только артефакты + PE-проверка).
+#
+# ПОЧЕМУ сборка на windows-latest: electron-builder на Linux требует wine
+# для rcedit (встраивание иконки/версии в exe); на Windows-раннере rcedit
+# работает нативно — тот же паттерн, что у проверенного build-win.
+#
+# ВАЖНО:
+#  - релиз помечается PRERELEASE — не становится «latest» и не влияет на
+#    канал автообновления обычных установок (latest.yml остаётся у тегов v*);
+#  - в релиз попадают ТОЛЬКО *.exe — без latest.yml/blockmap (у легаси-сборки
+#    нет канала автообновления: основная сборка требует Win10+, и обновлённая
+#    легаси-установка перестала бы запускаться на Windows 7);
+#  - автообновление отключено и в самом приложении (kipiaWin7Legacy: true
+#    в extraMetadata → electron/main.js);
+#  - содержимое справочника в legacy-сборке по-прежнему обновляется
+#    автоматически: приложение грузит index.html с GitHub Pages.
+# ============================================================================
+on:
+  push:
+    tags: [ 'legacy-v*' ]
+  workflow_dispatch:
+
+jobs:
+  # ─── Сборка (windows-latest — rcedit без wine) ────────────────────────
+  build-legacy-win:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Windows legacy (Electron 22.3.27, NSIS ia32 + x64 + universal)
+        run: npx electron-builder --win --config electron-builder-legacy.yml --publish never
+
+      - name: List dist-legacy
+        run: ls -lh dist-legacy/
+        shell: bash
+
+      - name: Upload Windows legacy installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: KIPiA-win7-legacy-setup
+          path: dist-legacy/*.exe
+
+  # ─── PE-верификация (ubuntu: 7z + python3) ─────────────────────────────
+  # Страховка от регрессии (Task 354): KIPiA.exe внутри установщиков обязан
+  # быть 32/64-битным (machine 0x014c / 0x8664) и объявлять PE OS 5.01 —
+  # иначе загрузчик Windows 7/8.1 отклонит его с ошибкой «не является
+  # приложением Win32» (как у сборок на Electron 35, где PE OS = 10.00).
+  verify-pe:
+    needs: build-legacy-win
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install 7-Zip
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq p7zip-full >/dev/null
+
+      - name: Download installers
+        uses: actions/download-artifact@v4
+        with:
+          name: KIPiA-win7-legacy-setup
+          path: legacy-installers
+
+      - name: Verify PE headers (machine + OS 5.01 — совместимость с Win7)
+        run: |
+          set -e
+          ls -lh legacy-installers/
+          python3 - <<'PY'
+          import os, struct, subprocess, glob
+
+          checks = {
+              'ia32': {'glob': 'legacy-installers/KIPiA-Setup-*-win7-ia32.exe', 'payload': 'app-32.7z', 'machine': 0x014c},
+              'x64':  {'glob': 'legacy-installers/KIPiA-Setup-*-win7-x64.exe',  'payload': 'app-64.7z', 'machine': 0x8664},
+          }
+
+          def extract(installer, payload, outdir):
+              subprocess.run(['7z', 'x', '-y', '-o' + outdir, installer], check=True, capture_output=True)
+              inner = os.path.join(outdir, '$PLUGINSDIR', payload)
+              appdir = os.path.join(outdir, 'app')
+              subprocess.run(['7z', 'x', '-y', '-o' + appdir, inner, 'KIPiA.exe'], check=True, capture_output=True)
+              return os.path.join(appdir, 'KIPiA.exe')
+
+          for arch, cfg in checks.items():
+              installers = glob.glob(cfg['glob'])
+              assert len(installers) == 1, f'ожидался ровно один установщик {arch}, найдено {len(installers)}'
+              exe = extract(installers[0], cfg['payload'], f'/tmp/check-{arch}')
+              with open(exe, 'rb') as f:
+                  head = f.read(4096)
+              e = struct.unpack_from('<I', head, 0x3C)[0]
+              machine = struct.unpack_from('<H', head, e + 4)[0]
+              osmaj, osmin = struct.unpack_from('<2H', head, e + 24 + 40)
+              assert machine == cfg['machine'], f'{arch}: machine=0x{machine:04x}, ожидалось 0x{cfg["machine"]:04x}'
+              assert (osmaj, osmin) == (5, 1), f'{arch}: PE OS {osmaj}.{osmin:02d}, ожидалось 5.01 (Win7-совместимо)'
+              print(f'OK {arch}: KIPiA.exe machine=0x{machine:04x}, PE OS 5.01 — запустится на Windows 7')
+          print('PE-верификация легаси-сборки пройдена')
+          PY
+
+  # ─── Release (создаётся при пуше тега legacy-v*) ──────────────────────
+  release-legacy:
+    needs: [build-legacy-win, verify-pe]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/legacy-v')
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: KIPiA-win7-legacy-setup
+          path: release-artifacts
+
+      - name: List release files
+        run: ls -lhR release-artifacts/
+
+      # PRERELEASE — не становится «latest»; файлы — только *.exe
+      # (без latest.yml: у легаси-сборки нет канала автообновления).
+      - name: Create GitHub Release (prerelease)
+        uses: softprops/action-gh-release@v2
+        with:
+          name: 'КИПиА ${{ github.ref_name }} — Legacy для Windows 7/8.1'
+          body: |
+            ## КИПиА ${{ github.ref_name }} — легаси-сборка для Windows 7 / 8.1
+
+            ### Для кого эта сборка
+            Основные установщики (KIPiA-Setup-2.1.8.exe / -x64 / -ia32) требуют **Windows 10 или новее**.
+            На Windows 7 / 8.1 (включая 32-битные) при их запуске появляется ошибка
+            «KIPiA.exe не является приложением Win32» — это ограничение платформы, а не повреждённый файл.
+
+            Для старых компьютеров предназначены файлы из ЭТОГО релиза:
+
+            ### Установка
+            - **Windows 7/8.1, 32-битная** — `KIPiA-Setup-*-win7-ia32.exe`
+            - **Windows 7/8.1, 64-битная** — `KIPiA-Setup-*-win7-x64.exe`
+            - Не знаете разрядность — `KIPiA-Setup-*-win7.exe` (универсальный, сам выберет)
+            - Требуется Windows 7 SP1 / 8.1 с обновлениями. Windows XP и Vista НЕ поддерживаются.
+
+            ### Отличия от основной сборки
+            - Оболочка собрана на Electron 22 (Chromium 108) — последней версии с поддержкой Windows 7/8.1.
+            - **Автообновление оболочки отключено**: основной канал обновлений раздаёт сборки для Windows 10+.
+            - Содержимое справочника обновляется автоматически при каждом запуске (загружается с сервера) — переустановка не нужна.
+            - Chromium 108 (2022) не получает обновлений безопасности: используйте легаси-сборку только на машинах, которые нельзя обновить до Windows 10.
+
+            ### Как обновить в будущем
+            Скачать новый файл `*-win7-*.exe` из раздела [Releases](https://github.com/bloknett-design/kip8-desktop/releases) и установить поверх.
+          draft: false
+          prerelease: true
+          files: |
+            release-artifacts/*.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

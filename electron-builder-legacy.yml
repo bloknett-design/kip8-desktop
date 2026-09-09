@@ -1,0 +1,71 @@
+# ============================================================================
+# Task 354 — ЛЕГАСИ-сборка для Windows 7 / 8.1 (Electron 22.3.27, Chromium 108)
+# ============================================================================
+# ПОЧЕМУ: обычная сборка (Electron 35 / Chromium 134) требует Windows 10+ —
+# PE-заголовок её бинарников объявляет OS 10.00, и загрузчик Windows 7/8.1
+# отклоняет KIPiA.exe с ошибкой «не является приложением Win32» (даже в
+# 32-битной ia32-сборке: ia32 означает разрядность, а не совместимость со
+# старыми ОС). Electron 22 — последняя ветка с поддержкой Windows 7/8.1
+# (её electron.exe объявляет PE OS 5.01, Chromium 108 официально поддерживает
+# Win7 SP1+). Сборка запускается из .github/workflows/build-legacy-win7.yml
+# по тегу legacy-v*.
+#
+# ОТЛИЧИЯ от package.json → build:
+#  - electronVersion 22.3.27 вместо 35.x;
+#  - extraMetadata: kipiaWin7Legacy=true (main.js по этому флагу отключает
+#    автообновление — основной канал latest.yml раздаёт сборки Win10+) и
+#    версия «2.1.8-lts» (видна в «О приложении» и в имени файла);
+#  - output dist-legacy (не пересекается с обычной dist/);
+#  - publish НЕТ: установщик не публикуется electron-builder'ом и НЕ пишет
+#    latest.yml в релизы — релиз (prerelease) собирает отдельный job
+#    workflow'а только из *.exe.
+#  - только Windows/NSIS, ia32 + x64.
+# ============================================================================
+appId: com.bloknett.kipia
+productName: KIPiA
+copyright: Copyright © 2026 bloknett-design
+
+directories:
+  output: dist-legacy
+
+# Метаданные, вписываемые в package.json собранного приложения:
+# kipiaWin7Legacy — флаг для electron/main.js (отключение автообновления),
+# version 2.1.8-lts — семвер-префикс lts отличает сборку от обычной 2.1.8.
+extraMetadata:
+  kipiaWin7Legacy: true
+  version: 2.1.8-lts
+
+# Electron 22.3.27 — последняя версия с поддержкой Windows 7/8.1.
+# Загружается electron-builder'ом независимо от node_modules (там 35.x).
+electronVersion: 22.3.27
+
+files:
+  - index.html
+  - images/**/*
+  - data/**/*
+  - electron/**/*
+
+asar: true
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - ia32
+    - target: nsis
+      arch:
+        - x64
+  icon: images/icon-512.png
+  artifactName: KIPiA-Setup-${version}-win7-${arch}.${ext}
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  installerLanguages:
+    - ru
+  language: 1049
+  shortcutName: КИПиА
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  deleteAppDataOnUninstall: false

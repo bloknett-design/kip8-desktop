@@ -353,3 +353,70 @@ getCurrentUser/updateRole). Тесты синхронизированы (test-ta
 scripts/ и tests/ — серверные справочники).
 
 Следующий номер задачи: 352.
+
+## Task 354 (09.09.2026) — легаси-сборка для Windows 7/8.1 + Electron 22-совместимость main.js
+
+Заявка: на старом 32-битном Windows при запуске установленного
+KIPiA-Setup-2.1.8-ia32.exe — «KIPiA.exe не является приложением Win32».
+
+Диагноз (разбор PE-заголовков релиза v2.1.8 локально): установщик
+корректен (все бинарники i386), но Electron 35 (Chromium 134)
+собран с MajorOperatingSystemVersion = 10.00 → загрузчик Win7/8.1
+отклоняет образ (ERROR_BAD_EXE_FORMAT). ia32 = разрядность, не
+совместимость со старыми ОС: обычная ia32-сборка — для 32-битной
+Windows 10+. Решение: легаси-линейка на Electron 22.3.27
+(последняя с поддержкой Win7/8.1, PE OS 5.01; проверено: e22=5.01,
+e23=5.01, e35=10.00; Chromium 108-совместимость контента — JS 0
+преград, CSS только scrollbar-width с webkit-фолбэками).
+
+- electron-builder-legacy.yml — НОВЫЙ: electronVersion 22.3.27,
+  ia32+x64, artifactName KIPiA-Setup-${version}-win7-${arch}.${ext},
+  extraMetadata { kipiaWin7Legacy: true, version: 2.1.8-lts },
+  output dist-legacy, publish НЕТ (без latest.yml-канала).
+- .github/workflows/build-legacy-win7.yml — НОВЫЙ: тег legacy-v* /
+  workflow_dispatch; сборка на windows-latest (electron-builder на
+  Linux требует wine для rcedit — на Windows-раннере нативно);
+  verify-pe джоба на ubuntu (7z + python: machine 0x014c/0x8664 +
+  PE OS 5.01 — страховка от Win10-бинарников); релиз legacy-v* —
+  PRERELEASE (не «latest», не мешает каналу автообновления), только
+  *.exe.
+- electron/main.js — совместимость с Electron 22 при сохранении
+  поведения на 35: протокол двойной путь (protocol.handle для 25+ /
+  registerBufferProtocol для 22, общая resolveFile); isRemoteAvailable
+  через модуль net (Node 16 без global fetch; единый путь, системный
+  прокси); автообновление отключается флагом kipiaWin7Legacy
+  (ленивый require electron-updater, no-op checkForUpdates, диалог в
+  меню); setTimeout(checkForUpdates) под гвардом.
+- Локальная верификация в песочнице: electron-builder скачал
+  e22.3.27, win-ia32-unpacked/KIPiA.exe = i386 + OS 5.01, x64 = OS
+  5.02, asar { version 2.1.8-lts, kipiaWin7Legacy true, весь новый
+  main.js }; финальная NSIS-упаковка локально упёрлась в wine —
+  перенесена на windows-latest (паттерн проверенного build-win).
+- .gitignore: dist-legacy/.
+- README: раздел «Легаси-сборка для Windows 7/8.1» + предупреждение
+  в «Как выбрать установщик» (основным нужно Win10+, в т.ч. ia32).
+- tests/test-task354.js +30 (SRC: флаг, ленивый require, гварды,
+  двойной протокол, нет fetch/AbortController, yml-конфиг, workflow
+  триггеры/windows-latest/PE-гварды/prerelease/только-exe, gitignore;
+  VM: isRemoteAvailable 7 сценариев на моке net, resolveFile 4 —
+  файлы с MIME, 404). Моки БЕЗ фазы таймеров (queueMicrotask):
+  async-тесты будили блуждающие setTimeout-focus из eval-скриптов
+  старых тестов → уронили прогон (318, 322) → flake-fix: моки focus
+  в test-task318.js (по прецеденту Task 325) + микротасковые моки.
+- Зеркала: тесты в kip8/kip8test (синк-инвариант: ассерты на
+  desktop-файлы за existsSync-гардами, в прочих репо — заглушка);
+  main.js в kip8test-desktop (свой REMOTE_APP_URL; тест-изоляция
+  Task 345 проходит, diff = ровно 2 строки URL/комментарий).
+- Тесты: kip8-desktop **2546/0**, kip8 2518/0, kip8test 2512/0,
+  kip8test-desktop 218/0. node --check main.js OK.
+- Пуш: kip8-desktop + kip8 + kip8test + kip8test-desktop, затем тег
+  legacy-v2.1.8 → релиз KIPiA-Setup-2.1.8-lts-win7-{ia32,x64}.exe +
+  универсальный (prerelease). Выдача: download/task354/
+  NOTICE-Task354-win7-legacy.md.
+
+Осознанные НЕ-правки: kip8/electron/main.js не тронут (стейджинг-копия
+устарела ещё до Task 129 — синк electron/ никогда не шёл); kip8test-desktop
+без legacy-workflow (тестовый канал, пользователей Win7 нет); основная
+сборка/канал latest.yml не менялись (на Win10+ всё как было).
+
+Следующий номер задачи: 355.

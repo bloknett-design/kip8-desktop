@@ -11,6 +11,7 @@ yarn-error.log*
 # Electron Builder
 dist/
 dist-desktop/
+dist-legacy/
 release/
 *.app
 *.exe
