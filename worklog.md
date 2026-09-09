@@ -316,3 +316,16 @@ Stage Summary:
   нужен: менялись только справочники scripts/ и тесты.
 
 Следующий номер задачи: 349.
+
+## Task 349 — синхрон справочников с kip8 (2026-09-09)
+
+- `scripts/Utils.gs`, `scripts/Sessions.gs`, `scripts/Auth.gs`,
+  DEPLOY-Task349-updaterole-evict-naming-ip-cleanup.md — байт-в-байт
+  из kip8 (мёртвый IP-код удалён; SESSION_CLEANUP_ORPHAN;
+  updateRole: замок + снапшот sessions!D + мгновенная выгонка при
+  «Запрет»);
+- tests/test-task349.js + run-all.js — синхрон из kip8;
+- Тесты: **2394/0 = полный паритет с kip8** (было 2366). Релиз НЕ
+  нужен: менялись только справочники scripts/ и тесты.
+
+Следующий номер задачи: 350.
