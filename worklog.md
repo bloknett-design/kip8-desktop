@@ -340,3 +340,16 @@ test-task350.js, test-task348.js (актуализирован), run-all.js.
 не нужен (сеть/клиент не менялись — только серверные справочники).
 
 Следующий номер задачи: 351.
+
+## Task 351 (09.09.2026) — sync: deleteUser + кэш чтений + listLogs-хвост + config
+
+Справочники Utils.gs/Code.gs/Sessions.gs + DEPLOY-дока
+байт-в-байт из kip8 (Admin.deleteUser с гардами; кэш чтений
+_rowsCache/beginExecution/инвалидация; getLastRows-хвост для
+listLogs; устойчивый getConfig; setCell-переводы heartbeat/
+getCurrentUser/updateRole). Тесты синхронизированы (test-task351
++46, test-task349/350 актуализированы) → **2473/0** = полный
+паритет с kip8. Релиз desktop-приложения НЕ нужен (только
+scripts/ и tests/ — серверные справочники).
+
+Следующий номер задачи: 352.
