@@ -435,3 +435,11 @@ e23=5.01, e35=10.00; Chromium 108-совместимость контента �
   ci (HTTP 500 у скачивания electron); linux/mac той же сборки прошли;
   лечится Re-run failed jobs в UI (токену недоступно) или следующим
   контент-пушем.
+
+---
+Task ID: 358
+Task: Electron-часть гарантированной доставки показаний расходомеров (outbox, перенос из kip8 b24ebd8): перехват закрытия окна.
+
+Реализация electron/main.js: attachCloseFlush(mainWindow) — close → preventDefault → executeJavaScript('FlowmeterData._outboxFlushBeacons()') → destroy (страховка 1.2 с); флаги __kipAllowClose (app.on('before-quit') — не ломает autoInstallOnAppQuit/quitAndInstall авто-обновление) и __kipCloseFlushed. Рендерер (index.html) пришёл CI-автосинком kip8@78d8ee5: write-ahead outbox + дедуп-флаш + sendBeacon + 60с-подавление повторных beacon. Тесты (автосинк): 2682/0 (test-task358.js Electron-гарды проверяют main.js).
+
+Следующий номер задачи: 359.
