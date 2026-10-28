@@ -90,9 +90,9 @@ function countOf(haystack, needle) {
 // ==========================================================================
 describe('Task 480 — SW: версия кэша', () => {
 
-    test("CACHE_VERSION = 'kipia-v557'", () => {
-        assertTrue(SW_SRC.indexOf("const CACHE_VERSION = 'kipia-v557';") !== -1,
-            'SW поднят до kipia-v557 (Task 480)');
+    test("CACHE_VERSION = 'kipia-v558'", () => {
+        assertTrue(SW_SRC.indexOf("const CACHE_VERSION = 'kipia-v558';") !== -1,
+            'SW поднят до kipia-v558 (Task 480)');
     });
 
     test('прежняя версия v703 отсутствует', () => {
@@ -101,8 +101,8 @@ describe('Task 480 — SW: версия кэша', () => {
     });
 
     test('несуществующая v512 отсутствует (guard)', () => {
-        assertTrue(SW_SRC.indexOf('kipia-v558') === -1,
-            'kipia-v558 не должен существовать');
+        assertTrue(SW_SRC.indexOf('kipia-v559') === -1,
+            'kipia-v559 не должен существовать');
     });
 
     test('персистентные кэши картинок/данных НЕ инкрементировались', () => {
@@ -114,7 +114,7 @@ describe('Task 480 — SW: версия кэша', () => {
     });
 
     test('комментарий Task 480 в шапке версий (окно 2600 → 3200, Task 486)', () => {
-        const i = SW_SRC.indexOf("const CACHE_VERSION = 'kipia-v557';");
+        const i = SW_SRC.indexOf("const CACHE_VERSION = 'kipia-v558';");
         // Task 499: комментарий плейсхолдеров (~430 симв.) отодвинул
         // Task 480 до ~8413 — окно 8100 → 8900.
         const ctx = SW_SRC.slice(Math.max(0, i - 11600), i);
@@ -259,7 +259,7 @@ describe('Task 480 — data/*.json: метаданные источника', ()
     // structure/лист/остальные файлы не тронуты)
     const TOTALS = {
         'data/devices.json':    { total: 'total_devices',    value: 1288, sheet: 'Приборы_app' },
-        'data/lockouts.json':   { total: 'total_lockouts',   value: 529,  sheet: 'Блокировки_app' },  // Task 548: авто-синк 04fe3e5 — 528→529 (Task 541: 9bab754 — 529→528)
+        'data/lockouts.json':   { total: 'total_lockouts',   value: 530,  sheet: 'Блокировки_app' },  // Task 550: авто-синки f591e1ec/bf1136e9 (28.10.2026) — 529→530  // Task 548: авто-синк 04fe3e5 — 528→529 (Task 541: 9bab754 — 529→528)
         'data/valves.json':     { total: 'total_valves',     value: 320,  sheet: 'Клапана_app' },
         'data/regulators.json': { total: 'total_regulators', value: 268,  sheet: 'Регуляторы_app' }
     };
